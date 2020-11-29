@@ -1,0 +1,356 @@
+---
+documentclass: ctexart
+output:
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    template: template_code.tex
+    highlight: espresso
+  word_document: default
+classoption: "hyperref,"
+geometry: margin=1in
+csl: chinese-gb7714-2005-numeric.csl
+bibliography: reference.bib
+header-includes:
+   - \usepackage{graphicx}
+   - \usepackage{float}
+   - \usepackage{indentfirst}
+   - \setlength{\parindent}{4em}
+logo: "cufe.jpg"
+---
+
+\tableofcontents
+
+\newpage
+
+# 环境配置与程序包
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(fig.pos = 'H', warning = FALSE, message = FALSE)
+library(knitr)
+library(tidyverse)
+library(caret)
+library(kernlab)
+library(pROC)
+library(kableExtra)
+# base_family = 'STXihei'
+```
+
+# 数据集与描述分析
+
+## 数据集
+
+```{r}
+dat = read.csv("data.csv", header = TRUE)
+dat = dat[2:ncol(dat)]
+
+dat_complete = dat %>% 
+  mutate(Terminate = 0)
+dat_complete$Terminate[which(dat_complete$EmploymentStatus %in% c("Voluntarily Terminated", "Terminated for Cause"))] = 1
+dat_complete$Terminate = as.factor(dat_complete$Terminate)
+
+training = dat_complete
+dat_complete = dat_complete %>% 
+  filter(Department != "Executive Office")
+
+table = read.csv("dictionary.csv", header = TRUE)
+names(table) = c("变量名", "变量描述", "数据格式")
+kable(table, booktabs=TRUE, format="latex", caption = "变量解释和类型") %>% 
+  kable_styling(latex_options=c("scale_down", "HOLD_position"))
+```
+
+## 描述分析
+
+### 时薪（美元）
+
+```{r fig.align="center", fig.cap="离职与在职两类员工日薪分布密度图（红色代表离职）", out.width="80%"}
+ggplot(dat_complete, aes(x = PayRate, fill = Terminate)) +
+  geom_density(alpha = 0.3) + 
+  theme_minimal() +
+  scale_fill_manual(values = c("#037418", "darkred"))
+```
+
+```{r fig.align="center", fig.cap="不同性别员工日薪分布密度图（蓝色代表已婚）", out.width="80%"}
+ggplot(dat_complete, aes(x = Sex, y = PayRate, fill = as.factor(MarriedID))) +
+  geom_violin(alpha = 0.3) + 
+  theme_minimal() +
+  labs(fill = "Married")
+```
+
+### 参与感
+
+```{r fig.align="center", fig.cap="离职与在职两类不同部门员工参与感箱线图（红色代表离职）", out.width="80%"}
+dat_complete %>% 
+  ggplot(mapping = aes(x = reorder(Department, EngagementSurvey), y = EngagementSurvey, fill = Terminate)) +
+    geom_boxplot(alpha = 0.5) +
+    labs(x = "Department", y = "Rate for Engagement", fill = "Terminate") +
+    theme_minimal() +
+    scale_fill_manual(values = c("#037418", "darkred"))
+```
+
+### 绩效
+
+```{r fig.align="center", fig.cap="不同任职状况的员工绩效（红色代表离职）", out.width="80%"}
+ggplot(dat_complete, aes(x = EmploymentStatus, fill = PerformanceScore)) +
+  geom_bar(stat = "count", position = "fill") +
+  theme_minimal() +
+  labs(y = "count") + 
+  coord_flip()
+```
+
+# 建立解释模型
+
+## 拟合
+
+```{r}
+logit2 = glm(Terminate ~ Sex + MaritalDesc + Department + PerformanceScore + EngagementSurvey + EmpSatisfaction + SpecialProjectsCount + PayRate, data = dat_complete, family = binomial(link = "logit"))
+logit2_sum = summary(logit2)
+kable(logit2_sum$coefficients, format="latex", booktabs=TRUE, caption = "Logit回归系数表", digit = 2) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+## 预测
+
+```{r}
+set.seed(1)
+inTraining <- createDataPartition(dat_complete$Terminate, p = .75, list = FALSE)
+train <- dat_complete[inTraining,]
+test <- dat_complete[-inTraining,]
+```
+
+```{r fig.align="center", fig.cap="预测的离职概率值（红色代表已知为离职）", out.width="80%"}
+logit3 = glm(Terminate ~ Sex + MaritalDesc + Department + PerformanceScore + EngagementSurvey + EmpSatisfaction + SpecialProjectsCount + PayRate, data = train, family = binomial(link = "logit"))
+probability = predict(logit3, test, type = "response")
+distribution = as.data.frame(probability)
+distribution = cbind(distribution, group = test$Terminate)
+ggplot(distribution, aes(x = probability, fill = group)) +
+  geom_density(alpha = 0.3) + 
+  theme_minimal() +
+  scale_fill_manual(values = c("#037418", "darkred"))
+
+testPred = probability
+testPred[testPred > 0.5] = 1
+testPred[testPred <= 0.5] = 0
+testPred = as.factor(testPred)
+```
+
+## 混淆矩阵与验证结果
+
+```{r}
+confusion = confusionMatrix(data = testPred,
+                reference = test$Terminate,
+                positive = "1")
+kable(as.data.frame(confusion$table), format="latex", booktabs=TRUE, caption = "混淆矩阵表") %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r}
+table = as.data.frame(confusion$overall)
+names(table) = c("指标值")
+table = t(table)
+rownames(table) = NULL
+kable(table, booktabs=TRUE, format="latex", caption = "验证结果表", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r}
+table = as.data.frame(confusion$byClass[1:5])
+names(table) = c("指标值")
+table = t(table)
+kable(table, format="latex", booktabs=TRUE, caption = "灵敏度和特异度等指标表", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+## 接受者操作特征（ROC）曲线
+
+```{r fig.align="center", fig.cap="Logit 模型的 ROC 曲线", out.width="60%"}
+rocCurve = roc(response = test$Terminate,
+               predictor = probability,
+               levels = rev(levels(test$Terminate)),
+               plot = TRUE,
+               print.thres=TRUE, print.auc=TRUE)
+```
+
+# 预测模型的选择
+
+## 抽样、训练与评价指标
+
+```{r}
+set.seed(1)
+fitControl <- trainControl(## 10-fold CV
+                           method = "repeatedcv",
+                           number = 10,
+                           ## repeated ten times
+                           repeats = 5)
+```
+
+## Logit 回归
+
+```{r}
+set.seed(1)
+logit <- train(Terminate ~ Sex + MaritalDesc + Department + PerformanceScore + EngagementSurvey + EmpSatisfaction + SpecialProjectsCount + PayRate, data = training, 
+                 method = "glm", 
+                 trControl = fitControl)
+table = logit$results
+rownames(table) = NULL
+kable(table, format="latex", booktabs=TRUE, caption = "在重抽样下 Logit 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+## 线性判别分析（LDA）
+
+```{r}
+set.seed(1)
+lda <- train(Terminate ~ Sex + MaritalDesc + Department + PerformanceScore + EngagementSurvey + EmpSatisfaction + SpecialProjectsCount + PayRate, data = training, 
+                 method = "lda", 
+                 trControl = fitControl,
+               preProc = c("center", "scale"))
+table = lda$results
+rownames(table) = NULL
+kable(table, format="latex", booktabs=TRUE, caption = "在重抽样下 LDA 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r fig.align="center", fig.cap="在重抽样下 LDA 模型的准确率分布", out.width="50%"}
+trellis.par.set(caretTheme())
+densityplot(lda, pch = "|")
+```
+
+## 偏最小二乘判别分析（PLSDA）
+
+```{r}
+set.seed(1)
+plsda <- train(Terminate ~ Sex + MaritalDesc + Department + PerformanceScore + EngagementSurvey + EmpSatisfaction + SpecialProjectsCount + PayRate, data = training, 
+                 method = "pls", 
+                 trControl = fitControl,
+               tuneGrid = expand.grid(.ncomp = 1:10))
+table = plsda$results
+rownames(table) = NULL
+kable(table, format="latex", booktabs=TRUE, caption = "在重抽样下 PLSDA 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r fig.align="center", fig.cap="Kappa 指标和准确率随主成分个数的变化", out.width="49%", fig.show='hold'}
+trellis.par.set(caretTheme())
+plot(plsda, metric = "Kappa")
+plot(plsda)
+```
+
+```{r fig.align="center", fig.cap="变量重要程度", out.width="80%"}
+plsImp = varImp(plsda, scale = FALSE)
+table = data.frame(variables = rownames(plsImp$importance), importence = plsImp$importance$Overall)
+ggplot(table, aes(x = reorder(variables, importence), y = importence)) +
+  geom_col() +
+  theme_minimal() +
+  coord_flip() +
+  labs(x = "variables")
+```
+
+## SVM
+
+```{r}
+set.seed(1)
+svm <- train(Terminate ~ Sex + MaritalDesc + Department + PerformanceScore + EngagementSurvey + EmpSatisfaction + SpecialProjectsCount + PayRate, data = training, 
+                 method = "svmRadial", 
+                 trControl = fitControl,
+            tuneLength = 5)
+kable(svm$results, format="latex", booktabs=TRUE, caption = "在重抽样下 SVM 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r fig.align="center", fig.cap="调优参数不同取值下的准确率和 Kappa 指标变化", out.width="49%", fig.show='hold'}
+trellis.par.set(caretTheme())
+plot(svm)
+plot(svm, metric = "Kappa")
+```
+
+## 随机梯度助推法（GBM）
+
+```{r include=FALSE}
+set.seed(1)
+gbm <- train(Terminate ~ Sex + MaritalDesc + Department + PerformanceScore + EngagementSurvey + EmpSatisfaction + SpecialProjectsCount + PayRate, data = training, 
+                 method = "gbm", 
+                 trControl = fitControl)
+kable(gbm$results, format="latex", booktabs=TRUE, caption = "在重抽样下 GBM 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r fig.align="center", fig.cap="调优参数和迭代次数不同取值下的准确率和 Kappa 指标变化", out.width="49%", fig.show='hold'}
+trellis.par.set(caretTheme())
+plot(gbm)
+
+trellis.par.set(caretTheme())
+plot(gbm, metric = "Kappa")
+```
+
+```{r fig.align="center", fig.cap="在重抽样下 GBM 模型的准确率分布", out.width="50%"}
+trellis.par.set(caretTheme())
+densityplot(gbm, pch = "|")
+```
+
+## 模型间的比较
+
+```{r}
+resamp = resamples(list(LDA = lda, PLSDA = plsda, SVM = svm, GBM = gbm, Logit = logit))
+s1 = summary(resamp)
+s2 = summary(diff(resamp))
+```
+
+```{r fig.align="center", fig.cap="模型间 Kappa 的比较（0.95 置信区间）", out.width="80%", fig.height=3, fig.width=6}
+ggplot(resamp,
+       models = c("LDA", "PLSDA", "GBM", "Logit"),
+       metric = "Kappa",
+       conf.level = 0.95) +
+  theme_bw()
+```
+
+```{r fig.align="center", fig.cap="模型间准确率的比较（0.95 置信区间）", out.width="80%", fig.height=3, fig.width=6}
+ggplot(resamp,
+       models = c("LDA", "PLSDA", "SVM", "GBM", "Logit"),
+       metric = "Accuracy",
+       conf.level = 0.95) +
+  theme_bw()
+```
+
+# 附录
+
+## 模型间准确率和 Kappa 的比较
+
+```{r}
+kable(s1$statistics$Accuracy, format="latex", booktabs=TRUE, caption = "模型间准确率的比较", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r}
+kable(s2$table$Accuracy, format="latex", booktabs=TRUE, caption = "模型间准确率差异矩阵", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r}
+kable(s1$statistics$Kappa, format="latex", booktabs=TRUE, caption = "模型间 Kappa 的比较", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r}
+kable(s2$table$Accuracy, format="latex", booktabs=TRUE, caption = "模型间Kappa差异矩阵", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+## Logit 回归结果
+
+```{r}
+logit2_sum
+```
+
+## 数据
+
+```{r}
+str(dat)
+```
+
+```{r}
+summary(dat)
+```
+
+
+

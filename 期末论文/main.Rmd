@@ -1,0 +1,702 @@
+---
+documentclass: ctexart
+output:
+  word_document: default
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    template: template.tex
+classoption: "hyperref,"
+geometry: margin=1in
+csl: chinese-gb7714-2005-numeric.csl
+bibliography: reference.bib
+header-includes:
+   - \usepackage{graphicx}
+   - \usepackage{float}
+   - \usepackage{indentfirst}
+   - \setlength{\parindent}{4em}
+logo: "cufe.jpg"
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(fig.pos = 'H', echo = FALSE, warning = FALSE, message = FALSE)
+library(knitr)
+library(tidyverse)
+library(caret)
+library(kernlab)
+library(pROC)
+library(kableExtra)
+library(e1071)
+# base_family = 'STXihei'
+```
+
+# 摘要{-}
+
+我们通过案例研究分析一个企业的员工离职情况，并从中找出员工离职问题的原因，通过建立多种算法模型，预测每个**员工离职的概率**，并进行模型效果的比较。同时，预测模型并不局限于该企业，而具有很强的普适性，可以为其它企业乃至社会研究提供商业服务支持、政策制定支撑。
+
+首先，我们建立简单的 Logit 回归以初步解释各个变量的效应。在使用混淆矩阵得出**灵敏度**和**特异度**之后，我们使用 **ROC 曲线**结合业务情形在两者之间进行权衡。
+
+在使用相同的重抽样方法进行重复 5 次的 10 折**交叉验证**的前提下，我们将准确率和 Kappa 作为衡量指标，比较了 **Logit、线性判别、偏最小二乘判别、支持向量机、随机梯度助推模型**的优劣。
+
+综合来看，**PLSDA**模型在两项评判指标下都具有最好的效果。然而，在模型的应用方面，由于 Logit 模型计算速度较快、可解释性强的，在对准确率要求不高而更加重视变量的可解释性的场景下，Logit 模型也不失为一个较好的选择。
+
+在变量选择上，最重要的变量**婚姻状况**和**绩效**。这两个变量对于不同部门、不同工作内容、不同工作地位的员工具有较强的普适性，属于对员工个人的刻画，对于预测员工是否离职较为重要。重要程度最低是薪资、特殊完成项目的数量和是否在IT/IS部门，这三个变量与员工个人的性格、工作能力、家庭关系较小，属于对工作分类的刻画，对于预测员工是否离职的重要性较低。
+
+\ 
+
+\ 
+
+\ 
+
+\ 
+
+关键词： **员工离职**， **分类预测模型**， **机器学习**， **变量选择**， **模型比较**
+
+\newpage
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+# 背景
+
+随着市场化和国际化的不断推行，行业的更迭越来越快，企业间的竞争变得越来越激烈，人力资源的流动也变得越来越快。可以说，人力资源的流动是一家公司、整个社会不可或缺也不可避免的一部分，一方面它使得人力资源的分配更高效；然而，另一方面，它也带来了一些摩擦性失业。
+
+1. 从社会科学的角度，对人力资源流动的合理预判有利于调整就业市场，尽可能地减小摩擦性失业。
+1. 从人才就业服务中心的角度，将合适的人放置于合适的企业、匹配的岗位是其工作的核心。
+1. 从企业的角度，由于企业的核心技术和运营业务被优秀的人才掌握，公司希望尽量避免自己所器重的员工为了更好的就业机会而主动离职，避免公司竞争力降低的同时竞争对手掌握主动权；同时，对于非核心的员工，公司则希望能够预判员工的离职，以降低离职率，减轻员工离职对公司正常经营活动的影响，节省公司新招聘员工的成本。
+
+大部分企业都会设立人事部专门管理人力资源问题，企业有着招聘员工需要付出一定的成本，而员工入职后的培训和磨合也需要不小的费用。能够胜任工作的优秀员工的离职对于企业来说是不小的损失。所以，人员的频繁离职是人力资源部极为重视的问题之一。
+
+引起员工离职的原因有很多，员工的薪资、满意度、工龄等等都是重要因素，通过描述性统计，我们能大致刻画出主动离职和被解雇员工的群体画像，得到一些结论。但是相较于得出群体结论，企业或是人才服务中心更加关注精确到每位员工上，从每位员工自身的角度，离职的原因又有很强的自身独特性，准确地预测出每位员工是否处于离职的边缘较难。
+
+# 文献综述
+
+在企业人力资源流动上，不同学者对员工离职的不同方面进行了研究。
+
+国内学者张梓嫣和杨喆麟都使用案例分析的方法研究企业员工离职问题。张梓嫣用问卷调查的方法对 BJM 公司进行案例分析，深入剖析了 BJM 公司留才策略的详细计划和执行现状，同时对其他的影视公司乃至整个影视行业如何缓解新员工频繁离职具有很高的参考价值。
+@张梓嫣2019BJM 杨喆麟作为管理者和参与人力资源规划的研究人员以案例分析的形式，以星巴克公司驻中国部作为案例研究对象，研究招聘培训以及薪酬福利的特点、提高员工工作积极性的方法；并进一步对星巴克员工离职问题提出优化措施找到切实可行的优化策略，以降低离职率、提高企业竞争优势。 @杨喆麟2017星巴克
+
+在筛选重要变量，找出离职原因方面，学者赵西萍、刘玲和张长征在则问卷调查的基础上，采用因子分析法和多元相关分析法提取主要因子，以对员工工作态度进行测度，提取引起员工离职倾向的关键因素。 @赵西萍2003A 
+
+在预测员工离职概率上，学者张紫君使用梯度提升分类树（GBDT）算法构建模型预测企业员工离职，采用 smote 算法对样本进行倾斜处理、采取网格搜索法模型的调优、使用混淆矩阵和 ROC 曲线进行评价模型、运用梯度提升分类树决定重要特征。 @张紫君2018企业员工的离职预测模型
+
+# 研究方法
+
+在我们的研究中，我们吸收了几位学者优秀的研究成果，并在他们的基础上继续加以研究创新。
+
+1. 通过案例研究的方式，对数据进行分析和处理，建立模型对企业员工离职倾向进行预测，选用多种机器学习模型进行模型比较，为离职概率的预测提供更多的评判思路。但与此同时，研究并不局限于一个案例，而是具有普适性，在实际应用过程中能够有效地推广到不同企业，为商业服务和社会政策决策提供参考依据。
+2. 我们应用机器学习算法探究导致离职的决定性因素，将重要的变量筛选出来，理清楚其影响关系，使用数据集中的这些变量预测有离职的倾向的员工。在数据中向更深的层次进行挖掘，通过探究内在的问题，提前采取措施，从而避免造成更多的损失。
+3. 结合心理学中的需求层次理论、双因素理论、公平理论和职业生涯理论探究导致员工的离职的深层次原因。从员工个人家庭婚姻因素，到职业发展因素，再到工作内容和工作岗位，又结合员工的更深层次的感受：参与感、满足感、价值感，多方面地探究导致员工离职最重要的因素。
+4. 在实际应用中，并不局限于此数据集，此研究为离职的预测提供思路，在应用时可以加以调整，使用更大维度的数据集，在分布计算环境下进行学习预测。
+
+# 数据集与描述分析
+
+## 数据集说明
+
+我们使用一个公开的数据集 ^[数据来源: http://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+Dataset#] ，它有 35 个变量，310 个观测。 ^[模型的变量取值和分布见附录]
+
+```{r}
+table = read.csv("dictionary.csv", header = TRUE)
+names(table) = c("变量名", "变量描述", "数据格式")
+kable(table, booktabs=TRUE, format="latex", caption = "变量解释和类型") %>% 
+  kable_styling(latex_options=c("scale_down", "HOLD_position"))
+```
+
+```{r}
+dat = read.csv("data.csv", header = TRUE)
+dat$Month = as.factor(dat$Month)
+dat$OperatingSystems = as.factor(dat$OperatingSystems)
+dat$Browser = as.factor(dat$Browser)
+dat$Region = as.factor(dat$Region)
+dat$TrafficType = as.factor(dat$TrafficType)
+dat$VisitorType = as.factor(dat$VisitorType)
+
+dat$Weekend = ifelse(dat$Weekend == TRUE, 1, 0)
+dat$Weekend = as.factor(dat$Weekend)
+dat$Revenue = ifelse(dat$Revenue == TRUE, 1, 0)
+dat$Revenue = as.factor(dat$Revenue)
+```
+
+Of the 12,330 sessions in the dataset, 84.5% (10,422) were negative class samples that did not end with shopping, and the rest (1908) were positive class samples ending with shopping.
+
+The dataset consists of feature vectors belonging to 12,330 sessions. The dataset was formed so that each session would belong to a different user in a 1-year period to avoid any tendency to a specific campaign, special day, user profile, or period.
+
+The dataset consists of 10 numerical and 8 categorical attributes. 
+The 'Revenue' attribute can be used as the class label. 
+
+"Administrative", "Administrative Duration", "Informational", "Informational Duration", "Product Related" and "Product Related Duration" represent the number of different types of pages visited by the visitor in that session and total time spent in each of these page categories. The values of these features are derived from the URL information of the pages visited by the user and updated in real time when a user takes an action, e.g. moving from one page to another. The "Bounce Rate", "Exit Rate" and "Page Value" features represent the metrics measured by "Google Analytics" for each page in the e-commerce site. The value of "Bounce Rate" feature for a web page refers to the percentage of visitors who enter the site from that page and then leave ("bounce") without triggering any other requests to the analytics server during that session. The value of "Exit Rate" feature for a specific web page is calculated as for all pageviews to the page, the percentage that were the last in the session. The "Page Value" feature represents the average value for a web page that a user visited before completing an e-commerce transaction. The "Special Day" feature indicates the closeness of the site visiting time to a specific special day (e.g. Mother’s Day, Valentine's Day) in which the sessions are more likely to be finalized with transaction. The value of this attribute is determined by considering the dynamics of e-commerce such as the duration between the order date and delivery date. For example, for Valentina’s day, this value takes a nonzero value between February 2 and February 12, zero before and after this date unless it is close to another special day, and its maximum value of 1 on February 8. The dataset also includes operating system, browser, region, traffic type, visitor type as returning or new visitor, a Boolean value indicating whether the date of the visit is weekend, and month of the year.
+
+## 数据预处理
+
+1. 为了保护员工的个人隐私，我们对数据进行了脱敏处理。
+1. 建模前，我们对原始数据进行了相关预处理，包括将数据中的缺失值、重复值、异常值的处理，对每个变量的数据分别进行标准化。对分类变量，我们采用因子化编码的处理方法，选定一个因子水平作为基准水平，将其余的因子水平拆分为各个虚拟变量 (Dummy Variables) 。
+1. 我们将**主动辞职**和**被迫离职**的标记为离职，与**在职**相对应，生成一个虚拟变量。
+
+\newpage
+
+## 描述分析
+
+### 工作日/周末
+
+```{r}
+dat_0 = dat %>% 
+  filter(Revenue == 0) %>% 
+  slice(1: 10000)
+dat_1 = dat %>% 
+  filter(Revenue == 1) %>% 
+  slice(1: 10000)
+dat_01 = rbind(dat_0, dat_1)
+```
+
+
+```{r fig.align="center", fig.cap="离职与在职两类员工日薪分布密度图（红色代表离职）", out.width="80%"}
+ggplot(dat_01, aes(x = BounceRates, y = ExitRates, color = Revenue)) +
+  geom_jitter(alpha = 0.3) + 
+  theme_minimal() +
+  scale_x_continuous(label = scales::percent) +
+  scale_y_continuous(label = scales::percent) +
+  labs(x = "Bounce Rates", y = "Exit Rates") +
+  geom_rug(sides = "bl") +
+  scale_color_manual(values = c("#037418", "red"))
+```
+
+离职的员工与在职的员工的有着相似的薪资分布情况，员工的时薪在 20 - 25 美元和 45 - 60 美元之间较为集中。但有所不同的是，离职的员工集中于 20 - 25 美元的比例更大，而集中于 45 - 60 美元的比例更小。这说明薪资过低的确是离职的一个较为重要的理由之一。
+
+### 页面价值/周末
+
+```{r fig.align="center", fig.cap="不同性别员工日薪分布密度图（蓝色代表已婚）", out.width="80%"}
+dat %>% 
+  filter(PageValues < 75) %>% 
+  ggplot(aes(x = Weekend, y = PageValues, fill = as.factor(Revenue))) +
+    geom_violin(alpha = 0.3) + 
+    theme_minimal() +
+    labs(fill = "Revenue", y = "Page Values", caption = "Exclude Page Values > 75") +
+    scale_fill_manual(values = c("#037418", "red"))
+```
+
+女性相比男性，时薪在 20 - 25 美元的低水平处聚集更加明显。
+
+已婚员工群体相对于未婚员工群体，最低薪资相对更高一些，低收入范围的平均工资更高一些，且中等收入范围的员工比例更多。考虑到婚姻状况与年龄强相关，我们认为这很有可能是由员工的工作经验所带来的影响。
+
+### 产品相关/特殊日/收入
+
+```{r fig.align="center", fig.cap="离职与在职两类不同部门员工参与感箱线图（红色代表离职）", out.width="80%"}
+dat %>% 
+  filter(ProductRelated < 300) %>% 
+  ggplot(mapping = aes(x = as.factor(SpecialDay), y = ProductRelated, fill = Revenue)) +
+    geom_boxplot(alpha = 0.5) +
+    labs(x = "Special Day", y = "Product Related", fill = "Revenue", caption = "Exclude Product Related > 300") +
+    theme_minimal() +
+    scale_fill_manual(values = c("#037418", "darkred"))
+```
+
+技术和销售部门员工的参与感不如生产和行政部门。从需求层次理论出发，员工有着实现自身价值的需要。对于 IT 和软件开发部门，离职者的参与感比在职者弱，他们离职的原因之一是没有获得足够的归属感和价值感。而对于销售和生产部门，离职着的参与感比在职者更强，工作太过繁忙可能是促成他们离职的一大原因。而对于行政岗位，没有足够的参与感往往意味着地位不足，可能收到部门的排挤和边缘化，促成了人员的离职。
+
+### 绩效
+
+```{r fig.align="center", fig.cap="不同任职状况的员工绩效（红色代表离职）", out.width="80%"}
+ggplot(dat, aes(x = as.factor(SpecialDay), fill = VisitorType)) +
+  geom_bar(stat = "count", position = "fill") +
+  theme_minimal() +
+  labs(y = "distribution", x = "Special Day") + 
+  coord_flip()
+summary(dat$SpecialDay)
+```
+
+我们发现：
+
+1. 在职员工的绩效普遍都在优秀和良好两档
+1. 自愿离职的员工绩效优秀的比例小一些
+1. 被解雇的员工绩效为 “需要提高” 的比例非常高，同时解雇前已经被列入 “解雇缓冲” 的比例远高于在职和自愿离职的员工
+
+可见绩效表现不好、不适应工作是员工自愿离职或被解雇的重要原因之一。
+
+\newpage
+
+# 建立解释模型
+
+## 拟合
+
+因为 logit 模型相对简单，求解速度快，且具有较强的可解释性，故我们使用 logit 模型对样本进行拟合。 ^[模型详细见附录]
+
+我们将**离职**作为响应变量，选取的自变量有：
+
+1. 性别
+1. 婚姻状况：包括离婚、已婚、分居、未婚、配偶去世
+1. 所在部门：包括行政部、总裁办公室、IT部门、产品部门、销售部门、软件工程部门
+1. 绩效：超过、符合要求、需要提高、进入淘汰流程
+1. 员工参与感：1-5 员工自行打分
+1. 员工满意度：1-5 员工自行打分
+1. 在过去的 6 个月内员工进行的特殊项目个数
+1. 时薪（美元）
+
+对于连续型变量，我们直接将它们加入模型之中；对于因子型变量，我们将它们转换成为隐变量。
+
+```{r}
+logit2 = glm(Revenue ~ Administrative + Administrative_Duration + Informational + Informational_Duration + ProductRelated + ProductRelated_Duration + BounceRates + ExitRates + PageValues + SpecialDay + Month, data = dat, family = binomial(link = "logit"))
+logit2_sum = summary(logit2)
+kable(logit2_sum$coefficients, format="latex", booktabs=TRUE, caption = "Logit回归系数表", digit = 2) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+
+在 Z 检验的 p 值中，在众多的因素之中，只有**婚姻状况**中的“分居”和“单身”，和**绩效表现**中的“有待提高”是统计上显著的。 ^[在 95% 置信区间下] 
+
+- 分居者和单身者的离职概率都显著较低，这可能与他们在经济上的独立性有关。分居者和单身者相比结婚合居者，在经济上不太依赖他人，有稳定的收入对他们来说更为重要，离职率自然较低一些。
+- 绩效表现较差的员工离职概率也较高，这一方面可能是由于员工自身品质不佳或能力不足造成的不胜任岗位；另一方面也可能是员工与企业的文化不契合，对于工作内容或是上级不适应不喜欢；还有可能是企业处于末位淘汰制度或是效益不好，而对员工进行主动辞退的操作。
+
+同时，**部门**中的销售部门、**绩效表现**中的“良好”和**特殊项目数量**这三个变量也有一定的显著性。 ^[在 90% 置信区间下] 
+
+- 相比技术部门，销售部门人员离职概率较低，这可能与销售人员在行业内专一产品方向所积累的经验和人脉有关。相比 IT 技术人员，销售人员的人脉可能更加局限于某一细分行业，跳槽的机会较少；而且，随着经验和人脉的积累，销售部门人员在企业内逐渐拿到更多的销售提成，对于企业的价值越来越大，企业对资深销售人员的待遇逐渐抬升；反过来，销售人员也一定程度上依赖着企业的平台，跳槽对于销售人员的不确定性较高。
+- 特殊项目的数量与离职率负相关，从心理学的角度，这与员工的成就感和价值感有关，由于他们的工作不仅局限于日常工作，其它的项目推进让他们有更多的参与感和成就感，进而增强了对企业的归属感；同时，反过来说，参加特殊项目多的员工很可能本身就是为企业器重的核心人员，他们本身待遇和地位都较高，离职倾向不明显。
+
+
+## 预测
+
+我们对样本进行随机抽样，划分为 75% 的训练集和 25% 的测试集（验证集）。
+
+```{r}
+set.seed(1)
+inTraining <- createDataPartition(dat$Revenue, p = .75, list = FALSE)
+train <- dat[inTraining,]
+test <- dat[-inTraining,]
+```
+
+```{r fig.align="center", fig.cap="预测的离职概率值（红色代表已知为离职）", out.width="80%"}
+logit3 = glm(Revenue ~ ., data = train, family = binomial(link = "logit"))
+probability = predict(logit3, test, type = "response")
+distribution = as.data.frame(probability)
+distribution = cbind(distribution, group = test$Revenue)
+ggplot(distribution, aes(x = probability, fill = group)) +
+  geom_density(alpha = 0.3) + 
+  theme_minimal() +
+  scale_fill_manual(values = c("#037418", "darkred"))
+
+testPred = probability
+testPred[testPred > 0.5] = 1
+testPred[testPred <= 0.5] = 0
+testPred = as.factor(testPred)
+```
+
+从预测概率分布图，对于真实情况为在职的员工，我们预测出的离职概率值的分布是有偏的；比较之下，对于真实情况为在职的员工，我们预测出的离职概率值的分布则显得较为均匀。
+
+对于真实情况为离职的员工，大部分得到的预测离职概率值的确都比较高。但对于真实情况为在职的员工，虽然大部分得到的预测离职概率较低，但仍然有相当一部分的预测离职概率值超过 50%。
+
+为此，我们猜想：**我们的模型将没有离职倾向的员工错预测为离职的概率较低，但是较难识别出可能离职的员工。**
+
+为了验证我们的猜想，我们使用混淆矩阵来计算预测模型的灵敏度和特异度。
+
+## 混淆矩阵与验证结果
+
+我们将预测概率大于 50% 的判定为离职。
+
+灵敏度（Sensitivity）
+
+$$\text{灵敏度} = \frac{\text{正确判定为“离职”的样本数量}}{\text{观测到的“离职”的样本数量}}$$
+
+特异度（Specificity）
+
+$$\text{特异度} = \frac{\text{正确判定为“在职”的样本数量}}{\text{观测到的“在职”的样本数量}}$$
+
+假离职率
+
+$$\text{假离职率} = 1 - \text{观测到的“在职”的样本数量}$$
+
+```{r}
+confusion = confusionMatrix(data = testPred,
+                reference = test$Revenue,
+                positive = "1")
+kable(as.data.frame(confusion$table), format="latex", booktabs=TRUE, caption = "混淆矩阵表") %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r}
+table = as.data.frame(confusion$overall)
+names(table) = c("指标值")
+table = t(table)
+rownames(table) = NULL
+kable(table, booktabs=TRUE, format="latex", caption = "验证结果表", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+可以看到：使用简单的 Logit 回归模型进行预测的准确率大致为: 59.2% ，95%置信区间为 (0.5131, 0.7394) ，并不算高，甚至低于无信息准确率（即不经预测直接将所有员工归为在职）。但这并不代表模型是无用的。
+^[事实上，在预测一些有偏分布的小概率事件时，模型准确率通常会低于无信息准确率。]
+
+```{r}
+table = as.data.frame(confusion$byClass[1:5])
+names(table) = c("指标值")
+table = t(table)
+kable(table, format="latex", booktabs=TRUE, caption = "灵敏度和特异度等指标表", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+从灵敏度和特异度来看：4% 的有离职倾向的员工会被模型成功捕捉到；对于模型捕捉到的员工，只有 13.7% 的误判率。
+
+这验证了我们的猜测：**对于真正离职的员工，模型不一定能准确预测到；不过模型预测认为有离职倾向的员工在绝大部分情况下的确会发生离职。**
+
+在模型准确度稳定的前提下，需要我们在灵敏度和特异度之间有所取舍。实际上，由于样本会更多的被认为是“发生”，所以灵敏度上升会使特异度下降。这二者之间的潜在利弊的权衡是合理的，因为不同类型的错误对应不同的惩罚。在对员工是否会离职做识别和预测的时候我们通常关注特异度，只要模型能够捕捉到部分可能离职的员工，模型对于企业人力资源部门或是劳动力服务中心还是有很强的实用性的。
+
+## 接受者操作特征（ROC）曲线
+
+为了在灵敏度和特异度二者间权衡，我们使用接受者操作特征（ROC）曲线。
+
+ROC曲线 (Altman 和 Bland 1994; Brown 和 Davis 2006; Fawcett 2006) @Altman1994Diagnostic @Brown2006Receiver @Fawcett2006An 是一种常用方法, 在给定连续数据点集合的情况下，确定有效阈值，使阈值以上的值表示特定事件。ROC 曲线可以用来决定分类概率的阈值。
+
+```{r fig.align="center", fig.cap="Logit 模型的 ROC 曲线", out.width="60%"}
+rocCurve = roc(response = test$Revenue,
+               predictor = probability,
+               levels = rev(levels(test$Revenue)),
+               plot = TRUE,
+               print.thres=TRUE, print.auc=TRUE)
+```
+
+前文计算灵敏度和特异度时，我们默认 50% 概率阈值。为了捕获更多真阳性样本的方式提高灵敏度，我们可以通过降低阈值的方法，将灵敏度从 4% 提高到了 96% ，特异度从 86.3% 降低到了 35.3%。
+
+也就是说，降低阈值有利于我们识别出更多有离职倾向的员工，但同时也会使误判的几率上升。
+
+在实际操作中，我们可以通过**确定不同的阈值来达到不同的效果**，例如：
+
+1. 当业务要求尽量减少筛选出的离职员工并减少错判时，可以通过提高阈值的方式增加特异度。
+2. 当业务要求尽量识别覆盖范围更广时，可以通过降低阈值的方式提高灵敏度，以检测出更多潜在离职者以扩大服务范围。
+3. 在进行人数评估时，通过平衡错判的成本与查漏的损失，确定适中的阈值以达到估计的准确性。
+
+# 预测模型的选择
+
+## 抽样、训练与评价指标
+
+```{r cache=TRUE}
+set.seed(1)
+inTraining <- createDataPartition(dat$Revenue, p = .10, list = FALSE)
+training <- dat[inTraining,]
+fitControl <- trainControl(## 10-fold CV
+                           method = "repeatedcv",
+                           number = 10,
+                           ## repeated two times
+                           repeats = 2)
+```
+
+由于数据量较大，我们随机抽取部分数据用于模型的训练和验证，使用10折交叉验证，重复2次的方法进行重抽样，使用 Kappa 和准确率作为模型的评价指标。 ^[由于数据集样本量过大，难以完成较为复杂的模型求解，且没有分布式计算的环境，我们从总样本中随机抽取 10% 的数据用于各种模型的训练和验证。] 
+
+Kappa 统计量（Cohen 1960） @Cohen1960A 最初是一个用来评估两个估价者评估结果的一致性，同时也考虑到了由偶然情况引起的准确性误差。
+
+$$\mathrm{Kappa}=\frac{O-E}{1-E}$$
+
+在上面的公式里，O代表的是准确性，E则代表着根据混淆矩阵边缘计数得出的期望准确性。0值意味着观测类和预测类是不同的，1值表示模型的预测与观测类是相同的，这个统计的量取值在-1和1之间。虽然绝对值大的负数值在模型预测中出现的很少，但负数代表实际和预测值是相反的。总精确度在各类分布相同的时候与 Kappa是成比例的。Kappa值在0.30到0.50间代表着合理的一致性，这要依具体情况而定。（Agresti 2002）
+
+## Logit 回归
+
+```{r}
+set.seed(1)
+logit <- train(Revenue ~ Administrative + Administrative_Duration + Informational + Informational_Duration + ProductRelated + ProductRelated_Duration + BounceRates + ExitRates + PageValues + SpecialDay + Month, data = training, 
+                 method = "glm", 
+                 trControl = fitControl)
+```
+
+```{r}
+table = logit$results
+rownames(table) = NULL
+kable(table, format="latex", booktabs=TRUE, caption = "在重抽样下 Logit 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+Logit 是一个受到非常广泛应用的模型，它十分简单、计算速度非常快，而且具有很强的可解释性。虽然 Logit 模型已经有很好的预测分类能力，但如果我们仅仅关注这一预测准确性这一指标，可能还有其它模型有更佳的表现。
+
+## 线性判别分析（LDA）
+
+Fisher（1936）@fisher36lda 和 Welch（1939）@WELCH1939 分析了获得最优判别准则的方式。
+
+由贝叶斯法则：
+
+$$
+\operatorname{Pr}\left[Y=C_{\ell} | X\right]=\frac{\operatorname{Pr}\left[Y=C_{\ell}\right] \operatorname{Pr}\left[X | Y=C_{\ell}\right]}{\sum_{\ell=1}^{C} \operatorname{Pr}\left[Y=C_{\ell}\right] \operatorname{Pr}\left[X | Y=C_{\ell}\right]}
+$$
+
+对于二分类问题，如果：
+
+$$
+\operatorname{Pr}\left[Y=C_{1}\right] \operatorname{Pr}\left[X | Y=C_{1}\right]>\operatorname{Pr}\left[Y=C_{2}\right] \operatorname{Pr}\left[X | Y=C_{2}\right]
+$$
+
+我们就将 X 分入类别1，否则分入类别2。
+
+为了计算 $\operatorname{Pr}\left[X | Y=C_{\ell}\right]$，我们假设预测变量服从多元正态分布，分布的两个参数为：多维均值向量 $\boldsymbol{\mu}_{\ell}$ 和协方差矩阵 $\boldsymbol{\Sigma}_{\ell}$，假设不同组的均值向量不同且协方差相同，用每一类观测样本均值 $\bar{x}_{\ell}$ 估计 $\boldsymbol{\mu}_{\ell}$，用样本协方差 $\boldsymbol{S}$ 估计理论协方差矩阵 $\boldsymbol{\Sigma}$，将样本观测 $\mu$ 代入 $X$，第 $\ell$ 组的线性判别函数为：
+
+$$
+X^{\prime} \boldsymbol{\Sigma}^{-1} \boldsymbol{\mu}_{\ell}-0.5 \boldsymbol{\mu}_{\ell}^{\prime} \boldsymbol{\Sigma}^{-1} \boldsymbol{\mu}_{\ell}+\log \left(\operatorname{Pr}\left[Y=C_{\ell}\right]\right)
+$$
+
+由于我们的分类只有两类，所以只有一个判别向量，不需要优化判别向量的数目，即不需要模型调优，计算速度较快。
+
+当我们仔细观察线性判别函数时,我们会发现 Fisher 的线性判别方法有两点缺陷：
+
+1. 而且，由于线性判别分析的数学构造，随着预测变量数目的增加，预测的类别概率越来越接近0和1。这意味这，在我们的数据集下，由于变量较多，如前文所述的调整概率阈值的方法可能有效性会降低。这在单纯分类**在职倾向**和**离职倾向**的员工时可能并不是问题，但在需要进一步平衡灵敏度和特异度以达到更好效果时将很难进行。
+
+2. 由于线性判别分析的结果取决于协方差矩阵的逆，且只有当这个矩阵可逆时才存在唯一解。这意味着样本量要大于变量个数 ^[一般要求数据集含有至少预测变量5——10倍的样本]，且变量必须尽量相互独立。而在我们的数据集中，变量之间有很强的多重共线性，这在一定程度上会降低预测的准确性。
+
+```{r cache=TRUE}
+set.seed(1)
+lda <- train(Revenue ~ Administrative + Administrative_Duration + Informational + Informational_Duration + ProductRelated + ProductRelated_Duration + BounceRates + ExitRates + PageValues + SpecialDay + Month, data = training, 
+                 method = "lda", 
+                 trControl = fitControl,
+               preProc = c("center", "scale"))
+```
+
+```{r}
+table = lda$results
+rownames(table) = NULL
+kable(table, format="latex", booktabs=TRUE, caption = "在重抽样下 LDA 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r fig.align="center", fig.cap="在重抽样下 LDA 模型的准确率分布", out.width="50%"}
+trellis.par.set(caretTheme())
+densityplot(lda, pch = "|")
+```
+
+## 偏最小二乘判别分析（PLSDA）
+
+由于 LDA 不太适合多重共线性的变量，我们可以试着使用主成分分析压缩变量空间的维度，但 PCA 可能无法识别能将样本分类的较好变量组合，且由于没有涉及被解释变量的分类信息（无监督），很难通过 PCA 找到一个最优化的分类预测。
+
+所以，我们使用偏最小二乘判别分析来进行分类。Berntsson 和 Wold（1986） @Peder1986Comparison 将偏最小二乘应用在了问题中，起名为偏最小二乘判别分析（PLSDA）。尽管 Liu 和 Rayens（2007） @Liu2007PLS 指出，在降维非必须且建模目的时分类的时候，LDA 一定优于 PLS，但我们希望在降维之后，PLS 的表现能超过 LDA。
+
+我们只使用前十个 PLS 成分
+
+```{r cache=TRUE}
+set.seed(1)
+plsda <- train(Revenue ~ Administrative + Administrative_Duration + Informational + Informational_Duration + ProductRelated + ProductRelated_Duration + BounceRates + ExitRates + PageValues + SpecialDay + Month, data = training, 
+                 method = "pls", 
+                 trControl = fitControl,
+               tuneGrid = expand.grid(.ncomp = 1:10))
+```
+
+```{r}
+table = plsda$results
+rownames(table) = NULL
+kable(table, format="latex", booktabs=TRUE, caption = "在重抽样下 PLSDA 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r fig.align="center", fig.cap="Kappa 指标和准确率随主成分个数的变化", out.width="49%", fig.show='hold'}
+trellis.par.set(caretTheme())
+plot(plsda, metric = "Kappa")
+plot(plsda)
+```
+
+我们可以看到 Kappa 指标随主成分个数的增多而先上升，后有所下降；准确率指标随着主成分个数的增加而先下降、后上升到顶峰、再下降。可见，在此模型中，选取前 8 个主成分不管是 Kappa 还是准确率指标都是最佳状态。
+
+```{r fig.align="center", fig.cap="变量重要程度", out.width="80%"}
+plsImp = varImp(plsda, scale = FALSE)
+table = data.frame(variables = rownames(plsImp$importance), importence = plsImp$importance$Overall)
+table = table %>% 
+  arrange(desc(importence)) %>% 
+  top_n(20)
+ggplot(table, aes(x = reorder(variables, importence), y = importence)) +
+  geom_col() +
+  theme_minimal() +
+  coord_flip() +
+  labs(x = "variables")
+```
+
+我们将变量按照其在 PLSDA 模型中的重要性进行排序：排在前三名的是“婚姻状况中的独居”、“绩效表现中的较差一类”和“婚姻状况中的已婚”。这三个变量对于不同部门、不同工作内容、不同工作地位的员工具有较强的普适性。属于对员工个人的刻画，对于预测员工是否离职较为重要。
+
+而重要程度最低的三个变量分别是“薪资水平”、“完成项目的数量”和“是否在IT/IS部门”。这三个变量与员工个人的性格、工作能力、家庭关系较小，属于对工作分类的刻画，对于预测员工是否离职的重要性较低。
+
+## SVM
+
+Logit、LDA、PLSDA 本质上都是线性模型，即模型结构产生线性类边界，这一类模型的优点是不太会受到无信息变量的干扰。然而，在我们的数据中，并没有存在大量无信息变量的情况，所以我们考虑使用非线性模型进行训练。
+
+```{r cache=TRUE}
+set.seed(1)
+svm <- train(Revenue ~ Administrative + Administrative_Duration + Informational + Informational_Duration + ProductRelated + ProductRelated_Duration + BounceRates + ExitRates + PageValues + SpecialDay + Month, data = training, 
+                 method = "svmRadial", 
+                 trControl = fitControl,
+            tuneLength = 5)
+```
+
+```{r}
+kable(svm$results, format="latex", booktabs=TRUE, caption = "在重抽样下 SVM 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r fig.align="center", fig.cap="调优参数不同取值下的准确率和 Kappa 指标变化", out.width="49%", fig.show='hold'}
+trellis.par.set(caretTheme())
+plot(svm)
+plot(svm, metric = "Kappa")
+```
+
+在损失参数增大的同时，准确率指标与 Kappa 指标的变化趋势相反，准确率有所降低而 Kappa 有所上升。
+
+## 随机梯度助推法（GBM）
+
+第三类被广泛应用的模型是分类树与基于规则的模型，在此，我们使用助推法这种树结构与规则的融合方法。
+
+Friedman等（2000） @Ben2000Tissue 发现分类问题可以当作是正向分布可加模型，通过最小化指数损失函数实现分类。
+
+首先我们设定样本预测初始值为对数发生：
+
+$$
+f_{i}^{(0)}=\log \frac{\hat{p}}{1-\hat{p}}
+$$
+
+其中，$f(x)$ 是模型的预测值，$\hat{p}_{i}=\frac{1}{1+\exp [-f(x)]}$
+
+接着从 $j = 1$ 开始进行迭代：
+
+1. 计算梯度 $z_{i}=y_{i}-\hat{p}_{i}$
+2. 对训练集随机抽样
+3. 基于子样本，用之前得到的残差作为结果变量训练树模型
+4. 计算终结点 Pearson 残差的估计 $r_{i}=\frac{1 / n\sum_{i}^{n}\left(y_{i}-\hat{p}_{i}\right)}{1 / n \sum_{i}^{n} \hat{p}_{i}\left(1-\hat{p}_{i}\right)}$
+5. 更新当前模型 $f_{1}=f_{i}+\lambda f_{i}^{(j)}$
+
+```{r cache=TRUE, include=FALSE}
+set.seed(1)
+gbm <- train(Revenue ~ Administrative + Administrative_Duration + Informational + Informational_Duration + ProductRelated + ProductRelated_Duration + BounceRates + ExitRates + PageValues + SpecialDay + Month, data = training, 
+                 method = "gbm", 
+                 trControl = fitControl)
+```
+
+```{r}
+kable(gbm$results, format="latex", booktabs=TRUE, caption = "在重抽样下 GBM 模型的表现", digits = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r fig.align="center", fig.cap="调优参数和迭代次数不同取值下的准确率和 Kappa 指标变化", out.width="49%", fig.show='hold'}
+trellis.par.set(caretTheme())
+plot(gbm)
+
+trellis.par.set(caretTheme())
+plot(gbm, metric = "Kappa")
+```
+
+助推树的加深和迭代次数的增多一般引起 Kappa 指标的上升，随着迭代次数的增加，准确率变动先下降后上升。
+
+```{r fig.align="center", fig.cap="在重抽样下 GBM 模型的准确率分布", out.width="50%"}
+trellis.par.set(caretTheme())
+densityplot(gbm, pch = "|")
+```
+
+## 模型间的比较
+
+我们对训练的4个不同的模型进行比较，所有模型都使用相同的重抽样方法估计各自的模型表现。且由于设置的随机数种子相同，故不同模型使用的重抽样样本完全一致。 ^[重抽样 50 次：10 折交叉验证重复 5 次]
+
+```{r}
+resamp = resamples(list(LDA = lda, PLSDA = plsda, SVM = svm, GBM = gbm, Logit = logit))
+s1 = summary(resamp)
+s2 = summary(diff(resamp))
+```
+
+```{r fig.align="center", fig.cap="模型间 Kappa 的比较（0.95 置信区间）", out.width="80%", fig.height=3, fig.width=6}
+ggplot(resamp,
+       models = c("LDA", "PLSDA", "GBM", "Logit"),
+       metric = "Kappa",
+       conf.level = 0.95) +
+  theme_bw()
+```
+
+```{r fig.align="center", fig.cap="模型间准确率的比较（0.95 置信区间）", out.width="80%", fig.height=3, fig.width=6}
+ggplot(resamp,
+       models = c("LDA", "PLSDA", "SVM", "GBM", "Logit"),
+       metric = "Accuracy",
+       conf.level = 0.95) +
+  theme_bw()
+```
+
+在**Kappa**这一效果衡量指标下，PLSDA 有着最好的效果，LDA 和 Logit 模型次之，GBM 模型远差于前面 3 个模型。
+
+在**准确率**这一效果衡量指标下，从偏差的角度来看，PLSDA 有着最好的效果，SVM 模型次之；从方差的角度来看，SVM 模型具有明显较小的方差。
+
+\newpage
+
+# 结论
+
+在此研究中，我们主要研究了企业**员工的离职预测问题**。我们通过这个研究一个案例，所得出的该企业结论员工离职情况，对整个人力市场有一定的启发性。
+
+于此同时，我们研究此案例的方法具有较好的普适性。对于此研究建立的多种预测离职预测模型，完全可以在其它企业中适当地调整后加以应用。
+
+同时该研究的受益者不仅仅是企业，就业市场服务中心、社会科学研究在涉及到人力资源流动时，均可参考这些模型和方法，对人力资源的流动进行方向上和比例上的评估和监测，为商业服务、政策制定提供解决方案。
+
+## 变量解释
+
+在我们的案例研究中，众多的变量中有一些变量是在统计学上显著的。 ^[在 90% 置信区间下] 
+
+- 分居者和单身者的离职概率都显著较低，由职业生涯理论，这可能与他们在经济上的独立性有关。分居者和单身者相比结婚合居者，在经济上不太依赖他人，有稳定的收入对他们来说更为重要，离职率自然较低一些。
+- 绩效表现较差的员工离职概率也较高。由双因素理论 ^[（two factor theory）亦称“激励一保健理论”] 员工对不满意因素的心理感受强于激励因素，容易引发主动离职。而绩效评定较差的原因，这一方面可能是由于员工自身品质不佳或能力不足造成的不胜任岗位；另一方面也可能是员工与企业的文化不契合，对于工作内容或是上级不适应不喜欢；还有可能是企业处于末位淘汰制度或是效益不好，而对员工进行主动辞退的操作。
+- 相比技术部门，销售部门人员离职概率较低，这可能与销售人员在行业内专一产品方向所积累的经验和人脉有关。相比 IT 技术人员，销售人员的人脉可能更加局限于某一细分行业，跳槽的机会较少；而且，随着经验和人脉的积累，销售部门人员在企业内逐渐拿到更多的销售提成，对于企业的价值越来越大，企业对资深销售人员的待遇逐渐抬升；反过来，销售人员也一定程度上依赖着企业的平台，跳槽对于销售人员的不确定性较高。
+- 特殊项目的数量与离职率负相关，由需求层次理论，这与员工的成就感和价值感有关，由于他们的工作不仅局限于日常工作，其它的项目推进让他们有更多的参与感和成就感，进而增强了对企业的归属感；同时，反过来说，参加特殊项目多的员工很可能本身就是为企业器重的核心人员，他们本身待遇和地位都较高，离职倾向不明显。
+
+## 阈值选择
+
+结合具体的业务，为了达到最高的效率，我们可以通过**确定不同的预测阈值来达到不同的效果**，例如：
+
+1. 在企业进行潜在离职者的一对一谈心和了解情况时，可以通过提高阈值的方法提高特异度，以尽量避免错判。
+2. 在就业服务中心进行潜在离职者的筛选时，通过降低阈值的方式提高灵敏度，以检测出更多潜在离职者以扩大服务范围。
+3. 在政策制定需要估计离职率时，通过平衡错判的成本与查漏的损失，确定适中的阈值以达到估计的准确性。
+
+## 模型选择
+
+在**Kappa**这一效果衡量指标下，PLSDA 有着最好的效果，LDA 和 Logit 模型次之，GBM 模型远差于前面 3 个模型。
+
+在**准确率**这一效果衡量指标下，从偏差的角度来看，PLSDA 有着最好的效果，SVM 模型次之；从方差的角度来看，SVM 模型具有明显较小的方差。
+
+综合来看，**PLSDA**模型具有最好的效果。然而，在模型的应用方面，由于 Logit 模型计算速度较快、可解释性强的，在对准确率要求不高而更加重视变量的可解释性的场景下，Logit 模型也不失为一个较好的选择。
+
+## 变量选择
+
+在 PLSDA 模型中的各变量重要性排序：排在前三名的是“婚姻状况中的独居”、“绩效表现中的较差一类”和“婚姻状况中的已婚”。这三个变量对于不同部门、不同工作内容、不同工作地位的员工具有较强的普适性。属于对员工个人的刻画，对于预测员工是否离职较为重要。
+
+而重要程度最低的三个变量分别是“薪资水平”、“完成项目的数量”和“是否在IT/IS部门”。这三个变量与员工个人的性格、工作能力、家庭关系较小，属于对工作分类的刻画，对于预测员工是否离职的重要性较低。
+
+## 模型应用
+
+1. 从企业角度：通过对员工是否将离职进行预测，可以为企业提前找到潜在的离职员工，并提前作出应对策略，通过改进用人制度和政策等措施留住企业并不想解雇的员工，以减小离职率。在减小离职率的同时，公司可以通过对有离职倾向的员工数量进行评估，提前准备后备人才以便随时顶岗，减小因个别人才的流失带来的损失。
+1. 从社会角度：利用大数据，通过对社区人员的信息统计，对数据进行脱敏处理后，可以预测人力资源流动、监测摩擦性失业指标，为政策决策提供依据，达到减小社会失业率的目的。
+
+\newpage
+
+# 参考文献
+
+<div id="refs"></div>
+
+\newpage
+
+# 附录
+
+## 模型间准确率和 Kappa 的比较
+
+```{r}
+kable(s1$statistics$Accuracy, format="latex", booktabs=TRUE, caption = "模型间准确率的比较", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r}
+kable(s2$table$Accuracy, format="latex", booktabs=TRUE, caption = "模型间准确率差异矩阵", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r}
+kable(s1$statistics$Kappa, format="latex", booktabs=TRUE, caption = "模型间 Kappa 的比较", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+```{r}
+kable(s2$table$Accuracy, format="latex", booktabs=TRUE, caption = "模型间Kappa差异矩阵", digit = 3) %>% 
+  kable_styling(latex_options=c("HOLD_position"))
+```
+
+## Logit 回归结果
+
+```{r}
+logit2_sum
+```
+
+## 数据指标明细
+
+```{r}
+str(dat)
+```
+
+```{r}
+summary(dat)
+```
+
+
+
