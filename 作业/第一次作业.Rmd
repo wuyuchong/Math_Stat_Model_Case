@@ -1,0 +1,82 @@
+---
+documentclass: ctexart
+output:
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+    template: template.tex
+    highlight: espresso
+classoption: "hyperref,"
+geometry: margin=1in
+header-includes:
+   - \usepackage{graphicx}
+   - \usepackage{float}
+   - \usepackage{indentfirst}
+   - \setlength{\parindent}{4em}
+logo: "cufe.jpg"
+csl: chinese-gb7714-2005-numeric.csl
+bibliography: cite.bib
+---
+
+\newpage
+
+```{r include=FALSE}
+knitr::opts_chunk$set(fig.show='hold', fig.pos = 'H', echo = F)
+library(tidyverse)
+library(knitr)
+library(reticulate)
+library(magrittr)
+library(GGally)
+```
+
+# ARA
+
+```{r}
+dat = read.csv("ST.csv")
+dat$ST = as.factor(dat$ST)
+dat$year = as.factor(dat$year)
+```
+
+```{r fig.align="center", fig.cap="ARA指标分布密度图（红色代表ST）", out.width="80%"}
+ggplot(dat, aes(x = ARA, fill = ST)) +
+  geom_density(alpha = 0.3) + 
+  theme_minimal() +
+  scale_fill_manual(values = c("#037418", "darkred"))
+```
+
+由图可知，当ARA值较小时，上市公司的财务数据出现异常的概率低于数据正常的概率；随着ARA值逐渐增加，上市公司的财务数据出现异常的概率和数据正常的概率均呈下降趋势，但数据异常的可能性大于数据正常的可能性。
+
+# 成长率
+
+1999年和2000年，财务数据正常的上市公司销售收入增长率集中在0左右，财务数据出现异常的上市公司销售收入呈现负增长。
+
+```{r fig.align="center", fig.cap="成长率各指标箱线图（红色代表ST）", out.width="80%"}
+ggplot(dat, aes(x = year, y = GROWTH, fill = ST)) +
+  geom_violin(alpha = 0.3) + 
+  theme_minimal() +
+  labs(fill = "ST") +
+  scale_fill_manual(values = c("#037418", "darkred"))
+```
+
+```{r}
+scaled = cbind(dat[,c(1,9)], scale(dat[,2:8]))
+dat_gather = scaled %>% 
+  gather("指标", "数值", 3:(ncol(dat)))
+```
+
+# 各指标
+
+```{r fig.align="center", fig.cap="各指标箱线图（红色代表ST）", out.width="80%"}
+dat_gather %>% 
+  ggplot(mapping = aes(x = 指标, y = 数值, fill = ST)) +
+    geom_boxplot(alpha = 0.5) +
+    labs(x = "index", y = "value", fill = "ST") +
+    scale_fill_manual(values = c("#037418", "darkred"))
+```
+
+对各自变量ST不同情况下绘制箱线图，由图可知，标准化后数据基本服从正态分布，ARA、GROWTH、ROA、SHARE变量在ST不同情况下均值差异较大，说明其取值大小对ST影响较大，其中，ARA为正影响，GROWTH、ROA、SHARE为负影响。
+
+
+
+

@@ -1,0 +1,80 @@
+---
+documentclass: ctexart
+output:
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+    template: template.tex
+    highlight: espresso
+classoption: "hyperref,"
+geometry: margin=1in
+header-includes:
+   - \usepackage{graphicx}
+   - \usepackage{float}
+   - \usepackage{indentfirst}
+   - \setlength{\parindent}{4em}
+logo: "cufe.jpg"
+csl: chinese-gb7714-2005-numeric.csl
+cite: "cite.bib"
+bibliography: cite.bib
+---
+
+\newpage
+
+```{r include=FALSE}
+knitr::opts_chunk$set(fig.show='hold', fig.pos = 'H', echo = F)
+library(knitr)
+```
+
+# 题
+
+**请列举一个数据科学中含有调整参数的模型或者数据处理方法。并说明调整参数在该模型中的作用。**
+
+## 随机梯度助推法 (GBM)
+
+随机梯度助推法中我们需要设定最大树深度 (Max Tree Depth)
+
+```{r, out.width="99%", fig.align='center', fig.cap="调优参数不同取值下的准确率和 Kappa 指标变化（摘自小组之前的论文）"}
+include_graphics("gbm.png")
+```
+
+一般情况下，树的深度越深，叶节点个数越多，树的复杂度越高。当树的深度无穷时，理论上可以用大数定律证明训练误差与测试误差是收敛一致的，但树的深度过高，计算速度过慢，且此时会有过拟合现象。 @wuyuchong
+
+## 支持向量机 (SVM)
+
+当使用SVM支持向量机时我们需要调节正则化参数C，C表示模型对误差的惩罚系数。
+
+```{r, out.width="99%", fig.align='center', fig.cap="调优参数不同取值下的准确率和 Kappa 指标变化（摘自小组之前的论文）"}
+include_graphics("svm.png")
+```
+
+C越大，模型越容易过拟合；C越小，模型越容易欠拟合。
+
+## 岭回归 (Ridge Regression)
+
+岭回归中我们需要根据不同的K参数判断回归估计的优良性。
+
+当设计矩阵存在多重共线性情况时，X'X可能是奇异矩阵，此时求得的最小二乘回归系数不稳定；但如果将X'X加上正常数矩阵KI，则X'X + KI的奇异性就会比X'X有所改善，此时求得的回归估计值比最小二乘估计稳定。
+
+当K=0时，退化为普通最小二乘估计，当 K→∞时，回归系数趋于0。由于K的选择是任意的，岭回归分析时一个重要的问题就是K取多少合适。
+
+由于岭回归是有偏估计，K值不宜太大；而且一般来说我们希望能尽量保留信息，即尽量能让K小些。因此可以观察在不同K的取值时方程的变动情况，然后取使得方程基本稳定的最小K值。
+
+\newpage
+
+# 题
+
+**请说明使用交叉验证法的原因。**
+
+交叉验证是验证模型准确性的一种常见方法，将样本数据分为训练数据和测试数据，用训练数据来进行模型的训练，再用测试数据去测试模型。 @wenku
+
+1. 交叉验证用于评估模型的预测性能，尤其是训练好的模型在新数据上的表现，可以在一定程度上减小过拟合现象的发生。 
+1. 使用交叉验证在训练集外进行预测并验证得到结果，可以使最后得到的结论有说服力。
+1. 使用多折交叉验证可以从有限的数据中获取尽可能多的有效信息。 @csdn
+
+# 参考文献
+
+
+
+
