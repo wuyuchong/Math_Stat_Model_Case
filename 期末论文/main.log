@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020) (preloaded format=xelatex 2020.11.26)  27 NOV 2020 11:25
+This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020) (preloaded format=xelatex 2020.11.26)  27 DEC 2020 19:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -993,78 +993,132 @@ LaTeX Info: Redefining \nameref on input line 71.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-File: cufe.jpg Graphic file (type bmp)
-<cufe.jpg>
+File: all.png Graphic file (type bmp)
+<all.png>
+[1
 
-LaTeX Font Warning: Font shape `TU/SongtiSCLight(0)/m/sc' undefined
-(Font)              using `TU/SongtiSCLight(0)/m/n' instead on input line 84.
-
+] (./main.toc
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 7.37756pt on input line 107.
+(Font)              scaled to size 7.37756pt on input line 6.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.26968pt on input line 107.
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
-07.
+(Font)              scaled to size 5.26968pt on input line 6.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 6
+.
 (/Users/didi/Library/TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 10.54033pt on input line 107.
+(Font)              scaled to size 10.54033pt on input line 6.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 7.37823pt on input line 107.
+(Font)              scaled to size 7.37823pt on input line 6.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.27016pt on input line 107.
+(Font)              scaled to size 5.27016pt on input line 6.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 10.53824pt on input line 107.
+(Font)              scaled to size 10.53824pt on input line 6.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.37677pt on input line 107.
+(Font)              scaled to size 7.37677pt on input line 6.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 5.26912pt on input line 107.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 107
-.
+(Font)              scaled to size 5.26912pt on input line 6.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 6.
 (/Users/didi/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 107
-.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 6.
 (/Users/didi/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-) [1
-
-] [1] (./main.toc
+)
 LaTeX Font Info:    Font shape `TU/SongtiSCLight(0)/m/sl' in size <10.53937> no
 t available
 (Font)              Font shape `TU/SongtiSCLight(0)/m/it' tried instead on inpu
-t line 31.
-[2])
+t line 14.
+[1])
 \tf@toc=\write4
 \openout4 = `main.toc'.
 
-[3]
+[2]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 7.52812pt on input line 222.
+(Font)              scaled to size 7.52812pt on input line 145.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.0pt on input line 222.
+(Font)              scaled to size 5.0pt on input line 145.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 7.52881pt on input line 222.
+(Font)              scaled to size 7.52881pt on input line 145.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.00046pt on input line 222.
+(Font)              scaled to size 5.00046pt on input line 145.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.52731pt on input line 222.
+(Font)              scaled to size 7.52731pt on input line 145.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 4.99947pt on input line 222.
-[4] [5] [6]
+(Font)              scaled to size 4.99947pt on input line 145.
+[3] [4] [5]
 File: main_files/figure-latex/unnamed-chunk-4-1.pdf Graphic file (type pdf)
 <use main_files/figure-latex/unnamed-chunk-4-1.pdf>
 File: main_files/figure-latex/unnamed-chunk-5-1.pdf Graphic file (type pdf)
 <use main_files/figure-latex/unnamed-chunk-5-1.pdf>
-[7]
+[6]
 File: main_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use main_files/figure-latex/unnamed-chunk-6-1.pdf>
-[8]
 File: main_files/figure-latex/unnamed-chunk-7-1.pdf Graphic file (type pdf)
 <use main_files/figure-latex/unnamed-chunk-7-1.pdf>
+[7]
+File: main_files/figure-latex/unnamed-chunk-10-1.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-10-1.pdf>
+[8]
+Overfull \hbox (42.06955pt too wide) in paragraph at lines 399--406
+ [][] 
+ []
+
 [9]
+File: main_files/figure-latex/unnamed-chunk-14-1.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-14-1.pdf>
+[10]
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/b/n' will be
+(Font)              scaled to size 10.53937pt on input line 505.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/b/n' will be
+(Font)              scaled to size 7.37756pt on input line 505.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/b/n' will be
+(Font)              scaled to size 5.26968pt on input line 505.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/b/n' will be
+(Font)              scaled to size 10.54033pt on input line 505.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/b/n' will be
+(Font)              scaled to size 7.37823pt on input line 505.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/b/n' will be
+(Font)              scaled to size 5.27016pt on input line 505.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/b/n' will be
+(Font)              scaled to size 10.53824pt on input line 505.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/b/n' will be
+(Font)              scaled to size 7.37677pt on input line 505.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/b/n' will be
+(Font)              scaled to size 5.26912pt on input line 505.
+File: main_files/figure-latex/unnamed-chunk-19-1.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-19-1.pdf>
+[11]
+File: main_files/figure-latex/unnamed-chunk-21-1.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-21-1.pdf>
+File: main_files/figure-latex/unnamed-chunk-21-2.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-21-2.pdf>
+File: main_files/figure-latex/unnamed-chunk-22-1.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-22-1.pdf>
+[12]
+File: main_files/figure-latex/unnamed-chunk-24-1.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-24-1.pdf>
+File: main_files/figure-latex/unnamed-chunk-24-2.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-24-2.pdf>
+File: main_files/figure-latex/unnamed-chunk-26-1.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-26-1.pdf>
+File: main_files/figure-latex/unnamed-chunk-26-2.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-26-2.pdf>
+[13]
+File: main_files/figure-latex/unnamed-chunk-27-1.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-27-1.pdf>
+File: main_files/figure-latex/unnamed-chunk-29-1.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-29-1.pdf>
+File: main_files/figure-latex/unnamed-chunk-29-2.pdf Graphic file (type pdf)
+<use main_files/figure-latex/unnamed-chunk-29-2.pdf>
+[14] [15] [16] [17] [18] [19]
+Overfull \hbox (42.65106pt too wide) in paragraph at lines 874--890
+ [][] 
+ []
+
+[20]
 
 Package fontspec Warning: Font "STFangsong" does not contain requested Script
 (fontspec)                "CJK".
@@ -1100,118 +1154,54 @@ Package fontspec Info: Font family 'STFangsong(0)' created for font
 (fontspec)             - 'small caps'  (m/sc) with NFSS spec.: 
 
 LaTeX Font Info:    Font shape `TU/STFangsong(0)/m/n' will be
-(Font)              scaled to size 10.23074pt on input line 400.
-[10] [11] [12]
-File: main_files/figure-latex/unnamed-chunk-10-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-10-1.pdf>
-[13]
-Overfull \hbox (42.06955pt too wide) in paragraph at lines 577--584
- [][] 
- []
-
-[14]
-File: main_files/figure-latex/unnamed-chunk-14-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-14-1.pdf>
-[15] [16]
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/b/n' will be
-(Font)              scaled to size 10.53937pt on input line 711.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/b/n' will be
-(Font)              scaled to size 7.37756pt on input line 711.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/b/n' will be
-(Font)              scaled to size 5.26968pt on input line 711.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/b/n' will be
-(Font)              scaled to size 10.54033pt on input line 711.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/b/n' will be
-(Font)              scaled to size 7.37823pt on input line 711.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/b/n' will be
-(Font)              scaled to size 5.27016pt on input line 711.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/b/n' will be
-(Font)              scaled to size 10.53824pt on input line 711.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/b/n' will be
-(Font)              scaled to size 7.37677pt on input line 711.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/b/n' will be
-(Font)              scaled to size 5.26912pt on input line 711.
-[17]
-File: main_files/figure-latex/unnamed-chunk-20-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-20-1.pdf>
-[18]
-File: main_files/figure-latex/unnamed-chunk-23-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-23-1.pdf>
-File: main_files/figure-latex/unnamed-chunk-23-2.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-23-2.pdf>
-File: main_files/figure-latex/unnamed-chunk-24-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-24-1.pdf>
-[19] [20]
-File: main_files/figure-latex/unnamed-chunk-27-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-27-1.pdf>
-File: main_files/figure-latex/unnamed-chunk-27-2.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-27-2.pdf>
-[21]
-Overfull \hbox (42.65106pt too wide) in paragraph at lines 897--913
- [][] 
- []
-
-File: main_files/figure-latex/unnamed-chunk-30-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-30-1.pdf>
-File: main_files/figure-latex/unnamed-chunk-30-2.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-30-2.pdf>
-File: main_files/figure-latex/unnamed-chunk-31-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-31-1.pdf>
-[22]
-File: main_files/figure-latex/unnamed-chunk-33-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-33-1.pdf>
-File: main_files/figure-latex/unnamed-chunk-34-1.pdf Graphic file (type pdf)
-<use main_files/figure-latex/unnamed-chunk-34-1.pdf>
-[23] [24] [25] [26] [27] [28] [29]
-Overfull \hbox (61.42932pt too wide) in paragraph at lines 1262--1262
+(Font)              scaled to size 10.23074pt on input line 930.
+[21] [22]
+Overfull \hbox (61.42932pt too wide) in paragraph at lines 999--999
 []\TU/lmtt/m/n/10.53937 ##  $ Month                  : Factor w/ 10 levels "Aug
 ","Dec","Feb",..: 3 3 3 3 3 3 3 3 3 3 ...[] 
  []
 
 
-Overfull \hbox (44.82977pt too wide) in paragraph at lines 1262--1262
+Overfull \hbox (44.82977pt too wide) in paragraph at lines 999--999
 []\TU/lmtt/m/n/10.53937 ##  $ OperatingSystems       : Factor w/ 8 levels "1","
 2","3","4",..: 1 2 4 3 3 2 2 1 2 2 ...[] 
  []
 
 
-Overfull \hbox (50.36298pt too wide) in paragraph at lines 1262--1262
+Overfull \hbox (50.36298pt too wide) in paragraph at lines 999--999
 []\TU/lmtt/m/n/10.53937 ##  $ Browser                : Factor w/ 13 levels "1",
 "2","3","4",..: 1 2 1 2 3 2 4 2 2 4 ...[] 
  []
 
 
-Overfull \hbox (44.82982pt too wide) in paragraph at lines 1262--1262
+Overfull \hbox (44.82982pt too wide) in paragraph at lines 999--999
 []\TU/lmtt/m/n/10.53937 ##  $ Region                 : Factor w/ 9 levels "1","
 2","3","4",..: 1 1 9 2 1 1 3 1 2 1 ...[] 
  []
 
 
-Overfull \hbox (50.36296pt too wide) in paragraph at lines 1262--1262
+Overfull \hbox (50.36296pt too wide) in paragraph at lines 999--999
 []\TU/lmtt/m/n/10.53937 ##  $ TrafficType            : Factor w/ 20 levels "1",
 "2","3","4",..: 1 2 3 4 4 3 3 5 3 2 ...[] 
  []
 
 
-Overfull \hbox (33.76347pt too wide) in paragraph at lines 1262--1262
+Overfull \hbox (33.76347pt too wide) in paragraph at lines 999--999
 []\TU/lmtt/m/n/10.53937 ##  $ VisitorType            : Factor w/ 3 levels "New_
 Visitor",..: 3 3 3 3 3 3 3 3 3 3 ...[] 
  []
 
-[30] [31] (./main.aux)
+[23] [24] (./main.aux)
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: EDA5F5440889E28E889C5224F1B82D3C;3220.
-
-LaTeX Font Warning: Some font shapes were not available, defaults substituted.
-
+(rerunfilecheck)             Checksum: EFE26C6234356FA7F8DC4E97F230B053;3162.
  ) 
 Here is how much of TeX's memory you used:
- 21579 strings out of 479393
- 431288 string characters out of 5878937
- 868347 words of memory out of 5000000
- 40577 multiletter control sequences out of 15000+600000
- 542378 words of font info for 115 fonts, out of 8000000 for 9000
+ 21527 strings out of 479393
+ 429027 string characters out of 5878937
+ 867292 words of memory out of 5000000
+ 40535 multiletter control sequences out of 15000+600000
+ 542306 words of font info for 106 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 97i,10n,118p,364b,895s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 97i,10n,118p,456b,900s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on main.pdf (32 pages).
+Output written on main.pdf (25 pages).
